@@ -1,5 +1,11 @@
+import React from "react"
+import { NavBar } from "../components/NavBar"
+
 const Index = () => (
-  <div>Hello NextJS</div>
+  <React.Fragment>
+    <NavBar />
+    <div>Hello NextJS</div>
+  </React.Fragment>
 )
 
 export default Index
