@@ -1,11 +1,11 @@
 import { MikroORM } from "@mikro-orm/core"
 import { __prod__ } from "./constants"
-// import { Post } from "./entities/Post"
 import mikroConfig from "./mikro-orm.config"
 import express from "express"
-import redis from 'redis'
-import session from 'express-session'
-import connectRedis from 'connect-redis'
+import cors from "cors"
+import redis from "redis"
+import session from "express-session"
+import connectRedis from "connect-redis"
 import { ApolloServer } from "apollo-server-express"
 import { buildSchema } from "type-graphql"
 
@@ -20,6 +20,10 @@ const main = async () => {
 
   const RedisStore = connectRedis(session)
   const redisClient = redis.createClient()
+  app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true
+  }))
   
   app.use(
     session({
@@ -28,11 +32,11 @@ const main = async () => {
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365, // one year
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: "lax",
         secure: __prod__ // only works in https
       },
       saveUninitialized: false,
-      secret: 'zzxczxczxczxcz',
+      secret: "zzxczxczxczxcz",
       resave: false,
     })
   )
@@ -45,7 +49,10 @@ const main = async () => {
     context: ({ req, res }) => ({ em: orm.em, req, res })
   })
 
-  apolloServer.applyMiddleware({ app })
+  apolloServer.applyMiddleware({
+    app,
+    cors: false
+  })
 
   // const post = orm.em.create(Post, {title: "first one"})
   // await orm.em.persistAndFlush(post)

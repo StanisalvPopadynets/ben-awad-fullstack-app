@@ -1,29 +1,37 @@
-import React from 'react'
-import { Formik, Form } from 'formik'
-import { InputField, Wrapper } from '../components'
-import { Box } from '@chakra-ui/layout'
-import { Button } from '@chakra-ui/button'
+import React from "react"
+import { useRouter } from "next/router"
+import { Formik, Form } from "formik"
+import { Box } from "@chakra-ui/layout"
+import { Button } from "@chakra-ui/button"
+import { useRegisterMutation } from "../generated/graphql"
+import { InputField, Wrapper } from "../components"
+import { toErrorMap } from "../utils"
 
-interface RegisterProps {
-
-}
+interface RegisterProps {}
 
 const Register: React.FC<RegisterProps> = ({}) => {
+  const router = useRouter()
+  const [, register] = useRegisterMutation()
 
   return (
     <Wrapper variant="small">
       <Formik
-        initialValues={{username: '', password: ''}}
-        onSubmit={(values) => {
-          console.log(values)
+        initialValues={{ username: "", password: "" }}
+        onSubmit={async (values, { setErrors }) => {
+          const res = await register(values)
+          if (res.data.register?.errors) {
+            setErrors(toErrorMap(res.data.register.errors))
+          } else if (res.data?.register.user) {
+            router.push("/")
+          }
         }}
       >
-        {({values, handleChange, isSubmitting}) => (
+        {({ values, handleChange, isSubmitting }) => (
           <Form>
             <InputField
               name="username"
               placeholder="username"
-              label="Username"  
+              label="Username"
             />
             <Box mt="4">
               <InputField
@@ -33,7 +41,14 @@ const Register: React.FC<RegisterProps> = ({}) => {
                 type="password"
               />
             </Box>
-            <Button type="submit" mt="4" colorScheme="teal" isLoading={isSubmitting}>Register</Button>
+            <Button
+              type="submit"
+              mt="4"
+              colorScheme="teal"
+              isLoading={isSubmitting}
+            >
+              Register
+            </Button>
           </Form>
         )}
       </Formik>

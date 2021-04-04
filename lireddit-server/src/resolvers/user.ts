@@ -1,44 +1,53 @@
 import { User } from "../entities"
 import { MyContext } from "src/types"
-import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql"
+import {
+  Arg,
+  Ctx,
+  Field,
+  InputType,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+} from "type-graphql"
 import argon2 from "argon2"
 
 @InputType()
 class UsernamePasswordInput {
   @Field()
-  username: string;
+  username: string
   @Field()
-  password: string;
+  password: string
 }
 
 @ObjectType()
 class FieldError {
   @Field()
-  field: string;
+  field: string
   @Field()
-  message: string;
+  message: string
 }
 
 @ObjectType()
 class UserResponse {
   @Field(() => [FieldError], { nullable: true })
-  errors?: FieldError[];
+  errors?: FieldError[]
 
   @Field(() => User, { nullable: true })
-  user?: User;
+  user?: User
 }
 
 @Resolver()
 export class UserResolver {
   @Query(() => User, { nullable: true })
-  async me(@Ctx()ctx: MyContext) {
+  async me(@Ctx() ctx: MyContext) {
     // you are not logged in
     if (!ctx.req.session.userId) {
       return null
     }
 
     const user = await ctx.em.findOne(User, { id: ctx.req.session.userId })
-    return user;
+    return user
   }
 
   @Mutation(() => UserResponse)
@@ -46,16 +55,16 @@ export class UserResolver {
     @Arg("options") options: UsernamePasswordInput,
     // @Arg("username", () => String) username: string,
     // @Arg("password", () => String) password: string,
-    @Ctx() ctx: MyContext  
+    @Ctx() ctx: MyContext
   ): Promise<UserResponse> {
     if (!(options.username.length > 2)) {
       return {
         errors: [
           {
             field: "username",
-            message: "Username length must be greated than two"
-          }
-        ]
+            message: "Username length must be greated than two",
+          },
+        ],
       }
     }
 
@@ -64,34 +73,35 @@ export class UserResolver {
         errors: [
           {
             field: "password",
-            message: "Password length must be greated than or equal to six"
-          }
-        ]
+            message: "Password length must be greated than or equal to six",
+          },
+        ],
       }
     }
 
     const hashedPassword = await argon2.hash(options.password)
     const user = ctx.em.create(User, {
       username: options.username,
-      password: hashedPassword
+      password: hashedPassword,
     })
     try {
       await ctx.em.persistAndFlush(user)
     } catch (error) {
-      if (error.code === "23505" || error.detail.includes("already exists")) {
+      if (error.detail.includes("already exists")) {
         // duplicate  username error
         return {
           errors: [
             {
               field: "username",
-              message: "Username has already been taken"
-            }
-          ]
+              message: "Username has already been taken",
+            },
+          ],
         }
       }
     }
+    ctx.req.session.userId = user.id
     return {
-      user
+      user,
     }
   }
 
@@ -100,17 +110,17 @@ export class UserResolver {
     @Arg("options") options: UsernamePasswordInput,
     // @Arg("username", () => String) username: string,
     // @Arg("password", () => String) password: string,
-    @Ctx() ctx: MyContext  
+    @Ctx() ctx: MyContext
   ): Promise<UserResponse> {
-    const user = await ctx.em.findOne(User, {username: options.username})
+    const user = await ctx.em.findOne(User, { username: options.username })
     if (!user) {
       return {
         errors: [
           {
             field: "username",
-            message: "That username doesn't exist"
-          }
-        ]
+            message: "That username doesn't exist",
+          },
+        ],
       }
     }
     const isValid = await argon2.verify(user.password, options.password)
@@ -119,15 +129,15 @@ export class UserResolver {
         errors: [
           {
             field: "password",
-            message: "Incorrect password"
-          }
-        ]
+            message: "Incorrect password",
+          },
+        ],
       }
     }
 
-    ctx.req.session.userId = user.id;
+    ctx.req.session.userId = user.id
     return {
-      user
+      user,
     }
   }
 }
