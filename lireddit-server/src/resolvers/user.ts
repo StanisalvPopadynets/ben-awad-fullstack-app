@@ -12,6 +12,7 @@ import {
 } from "type-graphql"
 import argon2 from "argon2"
 import { EntityManager } from "@mikro-orm/postgresql"
+import { COOKIE_NAME } from "../constants"
 
 @InputType()
 class UsernamePasswordInput {
@@ -152,5 +153,20 @@ export class UserResolver {
     return {
       user,
     }
+  }
+
+  @Mutation(() => Boolean)
+  logout(@Ctx() ctx: MyContext) {
+    return new Promise((res) =>
+      ctx.req.session.destroy((err) => {
+        ctx.res.clearCookie(COOKIE_NAME)
+        if (err) {
+          console.log(err)
+          res(false)
+          return
+        }
+        res(true)
+      })
+    )
   }
 }
