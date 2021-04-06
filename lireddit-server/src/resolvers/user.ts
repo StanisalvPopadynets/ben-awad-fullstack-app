@@ -4,7 +4,6 @@ import {
   Arg,
   Ctx,
   Field,
-  InputType,
   Mutation,
   ObjectType,
   Query,
@@ -13,14 +12,8 @@ import {
 import argon2 from "argon2"
 import { EntityManager } from "@mikro-orm/postgresql"
 import { COOKIE_NAME } from "../constants"
-
-@InputType()
-class UsernamePasswordInput {
-  @Field()
-  username: string
-  @Field()
-  password: string
-}
+import { UsernamePasswordInput } from "./UsernamePasswordInput"
+import { validateRegister } from "../utils"
 
 @ObjectType()
 class FieldError {
@@ -41,6 +34,11 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  // @Mutation(() => Boolean)
+  // async forgotPassword(@Arg("email") email: string, @Ctx() ctx: MyContext) {
+  //   // const person = await ctx.em.findOne(User, { email })
+  //   return true
+  // }
   @Query(() => User, { nullable: true })
   async me(@Ctx() ctx: MyContext) {
     // you are not logged in
@@ -59,26 +57,9 @@ export class UserResolver {
     // @Arg("password", () => String) password: string,
     @Ctx() ctx: MyContext
   ): Promise<UserResponse> {
-    if (!(options.username.length > 2)) {
-      return {
-        errors: [
-          {
-            field: "username",
-            message: "Username length must be greated than two",
-          },
-        ],
-      }
-    }
-
-    if (!(options.password.length >= 6)) {
-      return {
-        errors: [
-          {
-            field: "password",
-            message: "Password length must be greated than or equal to six",
-          },
-        ],
-      }
+    const errors = validateRegister(options)
+    if (errors) {
+      return { errors }
     }
 
     const hashedPassword = await argon2.hash(options.password)
@@ -94,6 +75,7 @@ export class UserResolver {
         .insert({
           username: options.username,
           password: hashedPassword,
+          email: options.email,
           created_at: new Date(),
           updated_at: new Date(),
         })
@@ -121,23 +103,29 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg("options") options: UsernamePasswordInput,
+    @Arg("usernameOrEmail") usernameOrEmail: string,
+    @Arg("password") password: string,
     // @Arg("username", () => String) username: string,
     // @Arg("password", () => String) password: string,
     @Ctx() ctx: MyContext
   ): Promise<UserResponse> {
-    const user = await ctx.em.findOne(User, { username: options.username })
+    const user = await ctx.em.findOne(
+      User,
+      usernameOrEmail.includes("@")
+        ? { email: usernameOrEmail }
+        : { username: usernameOrEmail }
+    )
     if (!user) {
       return {
         errors: [
           {
-            field: "username",
+            field: "usernameOrEmail",
             message: "That username doesn't exist",
           },
         ],
       }
     }
-    const isValid = await argon2.verify(user.password, options.password)
+    const isValid = await argon2.verify(user.password, password)
     if (!isValid) {
       return {
         errors: [

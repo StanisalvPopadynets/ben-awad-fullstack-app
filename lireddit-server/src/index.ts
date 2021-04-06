@@ -13,7 +13,6 @@ import { HelloResolver, PostResolver, UserResolver } from "./resolvers"
 
 const main = async () => {
   const orm = await MikroORM.init(mikroConfig)
-
   await orm.getMigrator().up()
 
   const app = express()
