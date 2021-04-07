@@ -3,7 +3,8 @@ import { COOKIE_NAME, __prod__ } from "./constants"
 import mikroConfig from "./mikro-orm.config"
 import express from "express"
 import cors from "cors"
-import redis from "redis"
+// import redis from "redis"
+import Redis from "ioredis"
 import session from "express-session"
 import connectRedis from "connect-redis"
 import { ApolloServer } from "apollo-server-express"
@@ -18,7 +19,8 @@ const main = async () => {
   const app = express()
 
   const RedisStore = connectRedis(session)
-  const redisClient = redis.createClient()
+  // const redisClient = redis.createClient()
+  const redis = new Redis()
   app.use(
     cors({
       origin: "http://localhost:3000",
@@ -29,7 +31,7 @@ const main = async () => {
   app.use(
     session({
       name: COOKIE_NAME,
-      store: new RedisStore({ client: redisClient, disableTouch: true }),
+      store: new RedisStore({ client: redis, disableTouch: true }),
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365, // one year
         httpOnly: true,
@@ -47,7 +49,7 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }) => ({ em: orm.em, req, res }),
+    context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
   })
 
   apolloServer.applyMiddleware({

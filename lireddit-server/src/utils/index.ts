@@ -56,7 +56,7 @@ export const validateRegister = (options: UsernamePasswordInput) => {
     return [
       {
         field: "username",
-        message: "Username length must be greated than two",
+        message: "Username length must be greater than two",
       },
     ]
   }
@@ -65,7 +65,7 @@ export const validateRegister = (options: UsernamePasswordInput) => {
     return [
       {
         field: "password",
-        message: "Password length must be greated than or equal to six",
+        message: "Password length must be greater than or equal to six",
       },
     ]
   }
