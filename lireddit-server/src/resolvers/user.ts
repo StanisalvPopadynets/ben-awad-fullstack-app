@@ -10,11 +10,11 @@ import {
   Resolver,
 } from "type-graphql"
 import argon2 from "argon2"
-import { EntityManager } from "@mikro-orm/postgresql"
 import { v4 } from "uuid"
 import { COOKIE_NAME, FORGOT_PASSWORD_PREFIX } from "../constants"
 import { UsernamePasswordInput } from "./UsernamePasswordInput"
 import { sendEmail, validateRegister } from "../utils"
+import { getConnection } from "typeorm"
 
 @ObjectType()
 class FieldError {
@@ -65,7 +65,9 @@ export class UserResolver {
       }
     }
 
-    const user = await ctx.em.findOne(User, { id: parseInt(userId) })
+    const userIdNum = parseInt(userId)
+
+    const user = await User.findOne(userIdNum)
     if (!user) {
       return {
         errors: [
@@ -79,9 +81,10 @@ export class UserResolver {
 
     ctx.redis.del(key)
 
-    user.password = await argon2.hash(newPassword)
-    await ctx.em.persistAndFlush(user)
-
+    await User.update(
+      { id: userIdNum },
+      { password: await argon2.hash(newPassword) }
+    )
     ctx.req.session.userId = user.id
 
     return { user }
@@ -90,9 +93,9 @@ export class UserResolver {
   @Mutation(() => Boolean)
   async forgotPassword(
     @Arg("email") email: string,
-    @Ctx() { em, redis }: MyContext
+    @Ctx() { redis }: MyContext
   ) {
-    const user = await em.findOne(User, { email })
+    const user = await User.findOne({ where: { email } })
     if (!user) {
       return true
     }
@@ -118,7 +121,7 @@ export class UserResolver {
       return null
     }
 
-    const user = await ctx.em.findOne(User, { id: ctx.req.session.userId })
+    const user = await User.findOne(ctx.req.session.userId)
     return user
   }
 
@@ -141,27 +144,29 @@ export class UserResolver {
     // })
     let user
     try {
-      const result = await (ctx.em as EntityManager)
-        .createQueryBuilder(User)
-        .getKnexQuery()
-        .insert({
+      const result = await getConnection()
+        .createQueryBuilder()
+        .insert()
+        .into(User)
+        .values({
           username: options.username,
           password: hashedPassword,
           email: options.email,
-          created_at: new Date(),
-          updated_at: new Date(),
         })
         .returning("*")
-      // await ctx.em.persistAndFlush(user)
-      user = result[0]
+        .execute()
+
+      user = result.raw[0]
     } catch (error) {
+      console.log(error)
       if (error.detail.includes("already exists")) {
         // duplicate  username error
+        const field = error.detail.split("(")[1].split(")")[0]
         return {
           errors: [
             {
-              field: "username",
-              message: "Username has already been taken",
+              field,
+              message: `${field} has already been taken`,
             },
           ],
         }
@@ -181,11 +186,10 @@ export class UserResolver {
     // @Arg("password", () => String) password: string,
     @Ctx() ctx: MyContext
   ): Promise<UserResponse> {
-    const user = await ctx.em.findOne(
-      User,
+    const user = await User.findOne(
       usernameOrEmail.includes("@")
-        ? { email: usernameOrEmail }
-        : { username: usernameOrEmail }
+        ? { where: { email: usernameOrEmail } }
+        : { where: { username: usernameOrEmail } }
     )
     if (!user) {
       return {
