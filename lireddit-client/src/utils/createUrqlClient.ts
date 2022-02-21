@@ -1,14 +1,14 @@
-import { cacheExchange, QueryInput, Cache } from "@urql/exchange-graphcache"
-import { dedupExchange, Exchange, fetchExchange } from "urql"
-import { pipe, tap } from "wonka"
-import Router from "next/router"
+import { cacheExchange, QueryInput, Cache } from "@urql/exchange-graphcache";
+import { dedupExchange, Exchange, fetchExchange } from "urql";
+import { pipe, tap } from "wonka";
+import Router from "next/router";
 import {
   LoginMutation,
   LogoutMutation,
   MeDocument,
   MeQuery,
   RegisterMutation,
-} from "../generated/graphql"
+} from "../generated/graphql";
 
 function betterUpdateQuery<Result, Query>(
   cache: Cache,
@@ -16,20 +16,22 @@ function betterUpdateQuery<Result, Query>(
   result: any,
   fn: (r: Result, q: Query) => Query
 ) {
-  return cache.updateQuery(qi, (data) => fn(result, data as any) as any)
+  return cache.updateQuery(qi, (data) => fn(result, data as any) as any);
 }
 
-const errorExchange: Exchange = ({ forward }) => (ops$) => {
-  return pipe(
-    forward(ops$),
-    tap(({ error }) => {
-      // If the OperationResult has an error send a request to sentry
-      if (error?.message.includes("not authenticated")) {
-        Router.replace("/login")
-      }
-    })
-  )
-}
+const errorExchange: Exchange =
+  ({ forward }) =>
+  (ops$) => {
+    return pipe(
+      forward(ops$),
+      tap(({ error }) => {
+        // If the OperationResult has an error send a request to sentry
+        if (error?.message.includes("not authenticated")) {
+          Router.replace("/login");
+        }
+      })
+    );
+  };
 
 export const createUrqlClient = (ssrExchange: any) => ({
   url: "http://localhost:4000/graphql",
@@ -47,7 +49,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
               { query: MeDocument },
               _result,
               () => ({ me: null })
-            )
+            );
           },
           login: (_result, args, cache, info) => {
             betterUpdateQuery<LoginMutation, MeQuery>(
@@ -56,14 +58,14 @@ export const createUrqlClient = (ssrExchange: any) => ({
               _result,
               (result, query) => {
                 if (result.login.errors) {
-                  return query
+                  return query;
                 } else {
                   return {
                     me: result.login.user,
-                  }
+                  };
                 }
               }
-            )
+            );
           },
           register: (_result, args, cache, info) => {
             betterUpdateQuery<RegisterMutation, MeQuery>(
@@ -72,14 +74,14 @@ export const createUrqlClient = (ssrExchange: any) => ({
               _result,
               (result, query) => {
                 if (result.register.errors) {
-                  return query
+                  return query;
                 } else {
                   return {
                     me: result.register.user,
-                  }
+                  };
                 }
               }
-            )
+            );
           },
         },
       },
@@ -88,4 +90,4 @@ export const createUrqlClient = (ssrExchange: any) => ({
     ssrExchange,
     fetchExchange,
   ],
-})
+});

@@ -1,4 +1,4 @@
-import { Field, Int, ObjectType } from "type-graphql"
+import { Field, Int, ObjectType } from "type-graphql";
 import {
   BaseEntity,
   Column,
@@ -7,41 +7,41 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from "typeorm"
-import { User } from "./User"
+} from "typeorm";
+import { User } from "./User";
 
 @ObjectType()
 @Entity()
 export class Post extends BaseEntity {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
-  id!: number
+  id!: number;
 
   @Field()
   @Column()
-  title!: string
+  title!: string;
 
   @Field()
   @Column()
-  text!: string
+  text!: string;
 
   @Field()
   @Column({ type: "int", default: 0 })
-  points!: number
+  points!: number;
 
   @Field()
   @Column()
-  creatorId: number
+  creatorId: number;
 
   @Field()
   @ManyToOne(() => User, (user) => user.posts)
-  creator: User
+  creator: User;
 
   @Field(() => String)
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @Field(() => String)
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

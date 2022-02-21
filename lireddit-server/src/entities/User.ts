@@ -6,36 +6,36 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from "typeorm"
-import { Field, Int, ObjectType } from "type-graphql"
-import { Post } from "./Post"
+} from "typeorm";
+import { Field, Int, ObjectType } from "type-graphql";
+import { Post } from "./Post";
 
 @ObjectType()
 @Entity()
 export class User extends BaseEntity {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
-  id!: number
+  id!: number;
 
   @Field(() => String)
   @Column({ unique: true })
-  username!: string
+  username!: string;
 
   @Field(() => String)
   @Column({ unique: true })
-  email!: string
+  email!: string;
 
   @Column({ unique: true })
-  password!: string
+  password!: string;
 
   @OneToMany(() => Post, (post) => post.creator)
-  posts: Post[]
+  posts: Post[];
 
   @Field(() => String)
   @CreateDateColumn()
-  createdAt = Date
+  createdAt = Date;
 
   @Field(() => String)
   @UpdateDateColumn()
-  updatedAt = Date
+  updatedAt = Date;
 }

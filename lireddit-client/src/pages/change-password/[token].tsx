@@ -1,20 +1,20 @@
-import React, { useState } from "react"
-import { NextPage } from "next"
-import { useRouter } from "next/router"
-import { Form, Formik } from "formik"
-import { Button } from "@chakra-ui/button"
-import { InputField, Wrapper } from "../../components"
-import { useChangePasswordMutation } from "../../generated/graphql"
-import { createUrqlClient, toErrorMap } from "../../utils"
-import { Box, Flex, Link } from "@chakra-ui/layout"
-import { withUrqlClient } from "next-urql"
-import NextLink from "next/link"
+import React, { useState } from "react";
+import { NextPage } from "next";
+import { useRouter } from "next/router";
+import { Form, Formik } from "formik";
+import { Button } from "@chakra-ui/button";
+import { InputField, Wrapper } from "../../components";
+import { useChangePasswordMutation } from "../../generated/graphql";
+import { createUrqlClient, toErrorMap } from "../../utils";
+import { Box, Flex, Link } from "@chakra-ui/layout";
+import { withUrqlClient } from "next-urql";
+import NextLink from "next/link";
 
 const ChangePassword: NextPage<{}> = () => {
-  const router = useRouter()
-  const [, changePassword] = useChangePasswordMutation()
+  const router = useRouter();
+  const [, changePassword] = useChangePasswordMutation();
 
-  const [tokenError, setTokenError] = useState("")
+  const [tokenError, setTokenError] = useState("");
   return (
     <Wrapper variant="small">
       <Formik
@@ -24,15 +24,15 @@ const ChangePassword: NextPage<{}> = () => {
             newPassword: values.newPassword,
             token:
               typeof router.query.token === "string" ? router.query.token : "",
-          })
+          });
           if (res.data.changePassword?.errors) {
-            const errorMap = toErrorMap(res.data.changePassword.errors)
+            const errorMap = toErrorMap(res.data.changePassword.errors);
             if ("token" in errorMap) {
-              setTokenError(errorMap.token)
+              setTokenError(errorMap.token);
             }
-            setErrors(errorMap)
+            setErrors(errorMap);
           } else if (res.data?.changePassword.user) {
-            router.push("/")
+            router.push("/");
           }
         }}
       >
@@ -66,7 +66,7 @@ const ChangePassword: NextPage<{}> = () => {
         )}
       </Formik>
     </Wrapper>
-  )
-}
+  );
+};
 
-export default withUrqlClient(createUrqlClient)(ChangePassword)
+export default withUrqlClient(createUrqlClient)(ChangePassword);

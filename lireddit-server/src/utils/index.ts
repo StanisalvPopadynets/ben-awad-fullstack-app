@@ -1,5 +1,5 @@
-import nodemailer from "nodemailer"
-import { UsernamePasswordInput } from "src/resolvers/UsernamePasswordInput"
+import nodemailer from "nodemailer";
+import { UsernamePasswordInput } from "src/resolvers/UsernamePasswordInput";
 
 // async..await is not allowed in global scope, must use a wrapper
 export async function sendEmail(to: string, html: string) {
@@ -19,7 +19,7 @@ export async function sendEmail(to: string, html: string) {
       // pass: testAccount.pass, // generated ethereal password
       pass: "uSQe8BKCUYwjJZwuQv", // generated ethereal password
     },
-  })
+  });
 
   // send mail with defined transport object
   let info = await transporter.sendMail({
@@ -29,13 +29,13 @@ export async function sendEmail(to: string, html: string) {
     subject: "Change Password", // Subject line
     // text, // plain text body
     html, // html body
-  })
+  });
 
-  console.log("Message sent: %s", info.messageId)
+  console.log("Message sent: %s", info.messageId);
   // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
 
   // Preview only available when sending through an Ethereal account
-  console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info))
+  console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
   // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
 }
 
@@ -49,7 +49,7 @@ export const validateRegister = (options: UsernamePasswordInput) => {
         field: "email",
         message: "Email is not valid",
       },
-    ]
+    ];
   }
 
   if (!(options.username.length > 2)) {
@@ -58,7 +58,7 @@ export const validateRegister = (options: UsernamePasswordInput) => {
         field: "username",
         message: "Username length must be greater than two",
       },
-    ]
+    ];
   }
 
   if (!(options.password.length >= 6)) {
@@ -67,8 +67,8 @@ export const validateRegister = (options: UsernamePasswordInput) => {
         field: "password",
         message: "Password length must be greater than or equal to six",
       },
-    ]
+    ];
   }
 
-  return null
-}
+  return null;
+};
